@@ -6,7 +6,7 @@ import { useFormikContext } from "formik";
 
 const FormCustomButtons = () => {
     const { setVisible, setRowData } = useModuleContext();
-    const { isSubmitting } = useFormikContext(); // Obtén el estado de isSubmitting de Formik
+    const { isSubmitting, handleSubmit } = useFormikContext(); // ✅ Obtener `handleSubmit`
 
     return (
         <div className="flex justify-content-end flex-wrap gap-3">
@@ -22,10 +22,11 @@ const FormCustomButtons = () => {
                 disabled={isSubmitting}
             />
             <Button
-                type="submit"
+                type="button" // ❌ `type="submit"` puede no funcionar si está fuera del `Form`
                 label={t(lang.common.actions.save)}
                 icon="pi pi-save"
                 disabled={isSubmitting}
+                onClick={() => handleSubmit()} // ✅ Ahora usa `handleSubmit` correctamente
             />
         </div>
     );

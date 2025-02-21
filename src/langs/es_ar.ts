@@ -320,7 +320,7 @@ export const es_ar = {
     }
   },
 
-  Category: {
+  CategoriaType: {
     title: "Categorias de Noticias",
     subTitle: "Categorias",
     new: "Nueva tipo de Categoría",

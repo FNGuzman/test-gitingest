@@ -1,18 +1,13 @@
-import { Formik } from "formik";
-import { t } from "i18next";
-import toast from "react-hot-toast";
-import { useModuleContext } from "../../../../hooks/useModules";
-import UseQueryMutation from "../../../../hooks/useQueryMutation";
-import { lang } from "../../../../langs";
-import { useCallback, useEffect } from "react";
+import { CategoriaTypePatchDTO, CategoriaTypePostDTO } from "@features/categoria-type/model/dtos/categoriaType.dto";
+import { CategoriaTypeApi } from "@features/categoria-type/service/categoriaType.service";
+import { Formik, FormikHelpers } from "formik";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
-import FormFields from "./FormFields";
-import { CategoriaTypeApi } from "@features/categoria-type/service/categoriaType.service";
-import { CategoriaTypePatchDTO, CategoriaTypePostDTO } from "@features/categoria-type/model/dtos/categoriaType.dto";
+import { useCallback, useEffect } from "react";
+import { useModuleContext } from "../../../../hooks/useModules";
+import UseQueryMutation from "../../../../hooks/useQueryMutation";
 import { fieldValidations } from "./fieldValidations/field.validations";
-import { ErrorApiResponse, handleApiError } from "@helpers/errorHandler";
-import { AxiosError } from "axios";
+import FormFields from "./FormFields";
 interface FormTypeActionsProps {
     refetch: () => void;
     title?: string;
@@ -20,62 +15,32 @@ interface FormTypeActionsProps {
 const FormCategoriaType: React.FC<FormTypeActionsProps> = ({ refetch, title = 'Titulo' }) => {
     const { setRowData, rowData, visible, setVisible } = useModuleContext();
     const postCategoriaType = UseQueryMutation({
-        requestFn: CategoriaTypeApi.postCategoriaType,
-        options: {
-            onError: (error: AxiosError<unknown>) => {
-                handleApiError(error as AxiosError<ErrorApiResponse>, {
-                    createdError: t(lang.Category.messages.createdError),
-                    unknownError: t(lang.Category.messages.unknownError)
-                });
-            },
-            onSuccess: () => {
-                toast.success(t(lang.Category.messages.createdSuccess));
-                setVisible(false);
-                setRowData(undefined);
-                refetch();
-            },
-        },
+        requestFn: (data: CategoriaTypePostDTO) => CategoriaTypeApi.create(data),
     });
 
     const patchCategoriaType = UseQueryMutation({
-        requestFn: CategoriaTypeApi.patchCategoriaType,
-        options: {
-            onError: (error: AxiosError<unknown>) => {
-                handleApiError(error as AxiosError<ErrorApiResponse>, {
-                    createdError: t(lang.Category.messages.updatedError),
-                    unknownError: t(lang.Category.messages.unknownError)
-                });
-            },
-            onSuccess: () => {
-                toast.success(t(lang.Category.messages.updatedSuccess));
-                setVisible(false);
-                setRowData(undefined);
-                refetch();
-            },
-        },
+        requestFn: (data: CategoriaTypePatchDTO) => CategoriaTypeApi.update(data),
     });
 
     const onSave = useCallback(
-        async (values: CategoriaTypePostDTO, setSubmitting: (isSubmitting: boolean) => void) => {
+        async (values: CategoriaTypePostDTO, { setSubmitting }: FormikHelpers<CategoriaTypePostDTO>) => { // ✅ Ahora usa `FormikHelpers`
             try {
                 if (rowData) {
-                    const req: CategoriaTypePatchDTO = {
-                        id: rowData.id,
-                        ...values,
-                    };
-
-                    await patchCategoriaType.mutateAsync(req);
+                    await patchCategoriaType.mutateAsync({ id: rowData.id, ...values });
                 } else {
-
                     await postCategoriaType.mutateAsync(values);
-
                 }
+                refetch();
+                setVisible(false);
+                setRowData(undefined);
             } finally {
                 setSubmitting(false);
             }
         },
-        [rowData, patchCategoriaType, postCategoriaType]
+        [rowData, patchCategoriaType, postCategoriaType, refetch, setVisible, setRowData]
     );
+
+
 
     useEffect(() => {
         if (!visible) {
@@ -114,14 +79,15 @@ const FormCategoriaType: React.FC<FormTypeActionsProps> = ({ refetch, title = 'T
             <Formik
                 initialValues={initialValues}
                 validationSchema={fieldValidations}
-                onSubmit={(values, { setSubmitting }) => {
-                    onSave(values, setSubmitting);
-                }}
+                onSubmit={onSave}
             >
-                <>
-                    <FormFields />
-                </>
+                {({ handleSubmit }) => (
+                    <form onSubmit={handleSubmit}>
+                        <FormFields />
+                    </form>
+                )}
             </Formik>
+
         </>
     );
 };

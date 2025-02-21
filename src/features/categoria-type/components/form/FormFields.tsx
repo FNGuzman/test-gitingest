@@ -14,7 +14,7 @@ const FormFields: FC = () => {
         <Form onSubmit={handleSubmit}>
             <div className="p-fluid formgrid grid mb-3">
                 <div className="col-12 md:col-6  lg:col-4">
-                    <FormTextInput label={t(lang.Category.form.name)} name={'nombre'}
+                    <FormTextInput label={t(lang.CategoriaType.form.name)} name={'nombre'}
                     />
                 </div>
 
