@@ -8,13 +8,44 @@ import { confirmDialog } from "primereact/confirmdialog";
 
 export const useFeatureModule = (apiService: any, moduleKey: string) => {
     const { rowData, startToolbarTemplate, visible, resetModuleState } = useModuleContext();
-    const { data, isFetching, refetch } = useQueryApi<Response>(
-        moduleKey,
-        apiService.getAll
-    );
+
+    const { data, isFetching, refetch } = useQueryApi<Response>(moduleKey, apiService.getAll);
+
     const getLangMessage = (key: string, path: string) => {
         return path.split(".").reduce((acc: any, part) => acc?.[part], lang[key as keyof typeof lang]) || "Mensaje no encontrado";
     };
+
+    // ✅ Agregamos `createMutation`
+    const createMutation = UseQueryMutation({
+        requestFn: apiService.create,
+        options: {
+            onError() {
+                toast.error(t(getLangMessage(moduleKey, "messages.createdError")));
+            },
+            onSuccess: () => {
+                refetch();
+                toast.success(t(getLangMessage(moduleKey, "messages.createdSuccess")));
+                resetModuleState(); // ✅ Cerrar el formulario después de crear
+            },
+        },
+    });
+
+    // ✅ Agregamos `updateMutation`
+    const updateMutation = UseQueryMutation({
+        requestFn: apiService.update,
+        options: {
+            onError() {
+                toast.error(t(getLangMessage(moduleKey, "messages.updatedError")));
+            },
+            onSuccess: () => {
+                refetch();
+                toast.success(t(getLangMessage(moduleKey, "messages.updatedSuccess")));
+                resetModuleState(); // ✅ Cerrar el formulario después de editar
+            },
+        },
+    });
+
+    // ✅ `deleteMutation` se mantiene igual
     const deleteMutation = UseQueryMutation({
         requestFn: apiService.delete,
         options: {
@@ -41,6 +72,7 @@ export const useFeatureModule = (apiService: any, moduleKey: string) => {
             },
         });
     };
+
     return {
         data,
         isFetching,
@@ -50,5 +82,7 @@ export const useFeatureModule = (apiService: any, moduleKey: string) => {
         visible,
         resetModuleState,
         handleDelete,
+        createMutation, // ✅ Ahora `CrudPage.tsx` puede usar `createMutation`
+        updateMutation, // ✅ Ahora `CrudPage.tsx` puede usar `updateMutation`
     };
 };
